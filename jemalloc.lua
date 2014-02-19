@@ -13,16 +13,17 @@
 -- Adheres to API version 3.5.0
 --
 
-
--- jemalloc uses an optional copmile-time prefix.
--- users must determine the prefix and assign it either to the global
--- variable JEMALLOC_PREFIX (set prior to the first `require` of this library),
--- or set the environment variable JEMALLOC_PREFIX.
--- Defaults to no prefix.
-local JEMALLOC_PREFIX = JEMALLOC_PREFIX or os.getenv('JEMALLOC_PREFIX') or ''
-
 local ffi = require 'ffi'
 local C = ffi.C
+
+-- jemalloc uses an optional compile-time prefix (specified using --with-jemalloc-prefix).
+-- Clients must determine the prefix and assign it either to the global
+-- variable JEMALLOC_PREFIX (set prior to the first `require` of this library),
+-- or set the environment variable JEMALLOC_PREFIX.
+-- Defaults to no prefix, except on OSX where it is 'je_'.
+local JEMALLOC_PREFIX = JEMALLOC_PREFIX or
+                        os.getenv('JEMALLOC_PREFIX') or
+                        (ffi.os == 'OSX' and 'je_' or '')
 
 do
     local cdef_template = [[

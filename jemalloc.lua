@@ -207,6 +207,7 @@ do
     local oldlenp = ffi.new('size_t[1]')
 
     -- TODO: load the MIBs at load-time and use them instead
+    --- return the value on success, otherwise nil, error
     function J.mallctl_read( param )
         local entry = mallctl_params[param]
         if not entry then return nil, 'invalid parameter' end
@@ -226,9 +227,29 @@ do
         end
     end
 
-    -- TODO: malloctl_write
+    -- returns true on success, otherwise false, error
+    -- Note: relies upon LuaJIT's conversions (http://luajit.org/ext_ffi_semantics.html)
+    -- which may throw an error if the conversion is invalid.
     function J.mallctl_write( param, value )
-        return nil, 'not implemented yet'
+        local entry = mallctl_params[param]
+        if not entry then return nil, 'invalid parameter' end
+        if not entry[3] then return nil, 'parameter is not writable' end
+
+        local newp = entry[1]                           -- newp may be nil for the non-rw entries,
+        local newlenp = newp and ffi.sizeof(newp) or 0  -- so set 0 size in that case
+
+        -- put the value into the holder (unless it is nil)
+        -- this may throw an error if the LuaJIT conversion is invalid
+        if newp then
+            newp[0] = value
+        end
+
+        local err = C[mallctl_fname]( param, nil, nil, newp, newlenp )
+        if err ~= 0 then
+            return nil, err
+        else
+            return true
+        end
     end
 end
 

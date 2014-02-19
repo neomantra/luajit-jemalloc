@@ -16,6 +16,9 @@ local J = require 'jemalloc'
 local version = J.mallctl_read('version')
 io.stdout:write('jemalloc version is ', version or 'UNKNOWN', '\n')
 
+-- exercise mallctl_write
+local success, err = J.mallctl_write('arenas.purge', 1)
+if not success then error('mallctl_write("arenas.purge") error: ' .. tostring(err)) end
 
 -- allocate some memory
 local size = 2*1024*1024

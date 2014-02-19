@@ -57,6 +57,7 @@ end
 -- our public API
 local J = {}
 
+
 do
     local abi_os = ffi.os:lower()
     if abi_os == 'linux' then
@@ -298,6 +299,37 @@ void !_!free(void *ptr);
             return nil, err
         end
         cdef_bound = true
+
+        local malloc_fname = JEMALLOC_PREFIX..'malloc'
+        function J.malloc( size )
+            return C[malloc_fname]( size )
+        end
+
+        local calloc_fname = JEMALLOC_PREFIX..'calloc'
+        function J.calloc( number, size )
+            return C[calloc_fname]( number, size )
+        end
+
+        local posix_memalign_fname = JEMALLOC_PREFIX..'posix_memalign'
+        function J.posix_memalign( ptr, alignment, size )
+            return C[posix_memalign_fname]( ptr, alignment, size )
+        end
+
+        local aligned_alloc_fname = JEMALLOC_PREFIX..'aligned_alloc'
+        function J.aligned_alloc( alignment, size )
+            return C[aligned_alloc_fname]( alignment, size )
+        end
+
+        local realloc_fname = JEMALLOC_PREFIX..'realloc'
+        function J.realloc( ptr, size )
+            return C[realloc_fname]( ptr, size )
+        end
+
+        local free_fname = JEMALLOC_PREFIX..'free'
+        function J.free( ptr )
+            return C[free_fname]( ptr )
+        end
+
         return true
     end
 end

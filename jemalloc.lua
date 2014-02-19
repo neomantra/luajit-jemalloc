@@ -9,7 +9,6 @@
 -- Does not load jemalloc, this must be done explicitly by the client
 -- either with ffi.load or through a preload mechanism.
 --
--- Only binds the 'non-standard API'
 -- Adheres to API version 3.5.0
 --
 
@@ -260,6 +259,46 @@ do
     local version_str = J.mallctl_read('version')
     if not string.match(version_str, version_pattern) then
         error('jemalloc version must match "',version_pattern,'", but was "'..version_str..'"')
+    end
+end
+
+
+function J.get_prefix()
+    return JEMALLOC_PREFIX
+end
+
+
+-------------------------------------------------------------------------------
+-- bind "standard" API to C namespace
+
+do
+    local cdef_template = [[
+void *!_!malloc(size_t size);
+void *!_!calloc(size_t number, size_t size);
+int !_!posix_memalign(void **ptr, size_t alignment, size_t size);
+void *!_!aligned_alloc(size_t alignment, size_t size);
+void *!_!realloc(void *ptr, size_t size);
+void !_!free(void *ptr);
+]]
+    local cdef_bound = nil
+
+    -- returns true if successful
+    -- successive invocations return the previously returned values
+    function J.bind_standard_api()
+        if cdef_bound == true then
+            return true
+        elseif cdef_bound ~= nil then
+            return nil, cdef_bound
+        end
+
+        local cdef_str = string.gsub(cdef_template, '!_!', JEMALLOC_PREFIX)
+        local success, err = pcall(function() ffi.cdef(cdef_str) end)
+        if not success then
+            cdef_bound = err
+            return nil, err
+        end
+        cdef_bound = true
+        return true
     end
 end
 

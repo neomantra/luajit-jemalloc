@@ -44,3 +44,11 @@ J.malloc_stats_print()
 local success, err  = J.bind_standard_api()
 if not success then error('failed to bind standard API: ' .. tostring(err)) end
 
+-- exercise flag macros
+J.MALLOCX_LG_ALIGN(1)
+J.MALLOCX_ALIGN(3)
+J.MALLOCX_ZERO()
+J.MALLOCX_ARENA(5)
+
+
+

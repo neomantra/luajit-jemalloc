@@ -26,12 +26,12 @@ To install the library, simply copy the file [`jemalloc.lua`](https://raw.github
 
 The **luajit-jemalloc** module does not 'load' the jemalloc shared library itself.  This is generally done by the user through `LD_PRELOAD` on Linux or `DYLD_INSERT_LIBRARIES` on OSX; see the [jemalloc wiki](https://github.com/jemalloc/jemalloc/wiki/Getting-Started) for details.   
 
-If you are not using a preload mechanism, then the shared library may be loaded programmatically using `ffi.load()`:
+If you are not using a preload mechanism, then the shared library may be loaded programmatically using the FFI:
 ```
 ffi.load('jemalloc')
 ```
 
-Finally, the module may then be loaded with `J = require 'jemalloc'` and the resulting `J` table will contain the API.  The shared library must be loaded before or the `jemalloc` module require will fail.
+The **luajit-jemalloc** module may then be loaded with `J = require 'jemalloc'` and the resulting `J` table will contain the API.  The shared library must be loaded before or the `jemalloc` module require will fail.
 
 
 Here's how I run on **luajit-jemalloc** on various systems:
@@ -58,19 +58,28 @@ The `flags` parameter may be omitted and defaults to 0.  Otherwise you may use t
   * `J.MALLOCX_ARENA( a )`
 
 #### ptr = J.mallocx( size, flags )
+
 #### ptr = J.rallocx( ptr, size, flags)
+  * Note that `rallocx` does *not* fall back to `mallocx` if `ptr` is `nil`, but will segfault.
+  * I'm not yet sure if I want to replace that behavior as you will then need to always pass the appropriates `flags` to `rallocx`.
+
 #### size = J.xallocx( ptr, size, extra, flags)
+
 #### size = J.sallocx( ptr, flags )
+
 #### J.dallocx( ptr, flags)
+
 #### size = J.nallocx( size, flags)
+
 #### size = J.malloc_usable_size( ptr )
+
 #### J.malloc_stats_print()
   * Does not support any arguments and invokes the default behavior.
 
 
 ## jemalloc's "Standard" API
 
-**luajit-jemalloc** does not bind the "standard" API memory allocation functions by default.  If you want to bind it, call `J.bind_standard_api()`.  It will then be available in the `J` API table.   The interface is identical to the "standard" API, except that the names do not have a prefix and uniformly return `success, err` (so you don't need to access `errno`).
+**luajit-jemalloc** does not bind the "standard" API memory allocation functions by default.  If you want to bind it, call `J.bind_standard_api()`.  It will then be available in the `J` API table.   The interface is identical to the "standard" API, except that the names do not have a prefix and uniformly return `success, err` (so one doesn't need to access `errno`).
 
 
 #### success, err = J.bind_standard_api()
@@ -134,6 +143,7 @@ The prefix does not affect the **luajit-jemalloc** API, just the internal mechan
  * use MIBs in mallctl
  * malloc_stats_print callbacks
  * maybe change the mallctl interface to be more table-like?
+ * decide what to do with `J.rallocx`
 
 
 # License
